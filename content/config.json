@@ -1,11 +1,11 @@
 {
-  "title": "Blog by John Doe",
-  "url": "https://lumen.alxshelepenok.com",
+  "title": "개발 블로그",
+  "url": "https://1005jh.github.io",
   "subtitle": "Pellentesque odio nisi, euismod in, pharetra a, ultricies in, diam. Sed arcu.",
-  "copyright": "© All rights reserved.",
-  "googleAnalyticsId": "UA-73379983-2",
+  "copyright": "",
+  "googleAnalyticsId": "",
   "disqusShortname": "",
-  "postsLimit": 4,
+  "postsLimit": 10,
   "pathPrefix": "/",
   "menu": [
     {
@@ -22,9 +22,9 @@
     }
   ],
   "author": {
-    "name": "John Doe",
-    "photo": "/photo.jpg",
-    "bio": "Pellentesque odio nisi, euismod in, pharetra a, ultricies in, diam. Sed arcu.",
+    "name": "정현",
+    "photo": "",
+    "bio": "안녕하세요 백엔드 개발자 김정현입니다.",
     "contacts": {
       "rss": "",
       "email": "",
