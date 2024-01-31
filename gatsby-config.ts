@@ -20,7 +20,7 @@ export default {
       resolve: "gatsby-source-filesystem",
       options: {
         name: "content",
-        path: path.resolve("content"),
+        path: `${__dirname}/content`,
       },
     },
     {
