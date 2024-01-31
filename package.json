@@ -15,7 +15,7 @@
   "license": "MIT",
   "author": "Alexander Shelepenok <alxshelepenok@gmail.com>",
   "scripts": {
-    "deploy": "npm run clean && gatsby build && gh-pages -d public ",
+    "deploy": "npm run clean && gatsby build && gh-pages -d public master",
     "build": "npm run clean && gatsby build",
     "clean": "rimraf .cache public",
     "format": "npm run format:ts && npm run format:scss",
