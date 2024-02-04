@@ -388,19 +388,14 @@ protected async executeEntitiesAndRawResults(
 ```typescript
 const queryBuilder = this.serviceRepository
   .createQueryBuilder("service")
+  .select("service", "mapper")
   .leftJoin("service.categoryMapper", "mapper")
   .where("service.status = :status", { status: "Applying" })
   .getMany();
-
-// 결과값
-// [
-//   {..service entity}...
-// ]
 ```
 
 위 코드는 service 테이블에서 mapper 테이블을 조인한 코드이다.
-`getMany()`는 엔티티를 반환하는데 `select`를 하지 않으면 조인을 했어도 기존 엔티티만을 반환한다.
-위의 코드에서 select를 추가해준다면
+`select`를 하지 않으면 조인을 했어도 기존(service) 엔티티만을 반환한다.
 
 ```typescript
 // 결과값
@@ -416,8 +411,6 @@ const queryBuilder = this.serviceRepository
 결과값에서 mapper entity 는 {maincategoryid : xx}가 될 것이다.
 
 여기서 mapper entity의 다른 값에 접근을 하게 된다면 undefined가 나오게 된다.
-
-이는 `getMany`가 rawResult를 entity화 시키기 때문에 가져오지 않은 entity에서의 값은 undefined로 나오는 것이다.
 
 이제 `getRawMany()`를 봐보면
 
@@ -483,7 +476,43 @@ async getRawMany<T = any>(): Promise<T[]> {
 ```typescript
 const queryBuilder = this.serviceRepository
   .createQueryBuilder("service")
+  .select("service", "mapper")
   .leftJoin("service.categoryMapper", "mapper")
   .where("service.status = :status", { status: "Applying" })
   .getRawMany();
 ```
+
+아까와 같은 service entity에서 mapper entity를 조인한 결과를 가져오는 쿼리빌더이다.
+`getRawMany`는 JSON 객체이기 때문에 반환값에 각각의 alias가 붙어있다.
+
+```typescript
+{
+  service_xx,
+  service_xxx,
+  mapper_xx,
+  mapper_xxx,
+}
+```
+
+`getMany`와 다른 점은 엔티티화 되어 있지 않기 때문에 조인한 테이블도 위처럼 하나의 객체안에 들어있고,
+원시결과이기 때문에 공식문서에도 나와 있듯이 데이터를 통한 합계를 내거나 하는 작업을 할 수 있다.
+But sometimes you need to select some specific data, let's say the sum of all user photos. This data is not an entity, it's called raw data. To get raw data, you use getRawOne and getRawMany.
+예를 들자면
+
+```typescript
+ex.select("AVG(table.int) as avgStarPoint");
+select(`IF(조건 IS NOT NULL, true, false) AS alias`);
+select("SUM(user.photosCount)", "sum");
+```
+
+이러한 작업들을 할 수 있다고 볼 수 있다.
+
+또한 `getRawMany`를 사용 할 때 `select('entity.*')`을 사용하면
+entity_xx 이렇게 나오는 것을 xx 이렇게 나오게 할 수 있다.
+
+그리고 원시결과에 접근하는 `getRawMany`는 결과값을 잘라낼 때 (ex . 페이지네이션)
+skip, take가 아니라 offset, limit을 사용해야 한다.
+skip과 take를 사용하면 적용이 되지 않아 전체가 나오는 것을 볼 수 있다.
+
+순수하게 엔티티만 반환하는 api에서는 `getMany`가 보다 더 깔끔하게 보여줄 수 있고,
+순수한 데이터가 필요한 경우거나 특정 열만 선택하는 경우 `getRawMany`가 보다 유용하다.
