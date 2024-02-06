@@ -10,7 +10,7 @@ tags:
 description: "aws deploy, s3, ec2 cicd 분기처리"
 ---
 
-진행중인 프로젝트에서 aws s3와 codedeploy를 사용해 ec2에 자동배포를 했었다.
+진행중인 aliy 프로젝트에서 aws s3와 codedeploy를 사용해 ec2에 자동배포를 했었다.
 dev와 main 둘 다 같은 방식으로 진행을 했던터라 codedeploy 과정에서 애플리케이션을 실행하는 방식이 달랐다.
 
 이 문제를 해결하기 위해 어떤 방식이 있을지 고민했던 것들을 적어보겠다.
