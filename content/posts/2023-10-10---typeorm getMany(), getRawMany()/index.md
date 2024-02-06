@@ -381,7 +381,8 @@ protected async executeEntitiesAndRawResults(
 위 코드는 우선 lock에 대한 예외처리가 되어 있고, `loadRawResults`에서 원시결과를 가져오는 것을 알 수 있다.
 그리고 가져온 원시결과를 `RawSqlResultsToEntityTransformer`클래스를 통해 엔티티로 변환하는 작업을 수행한다.
 마지막에는 관계에 따른 로딩에 관련된 내용이 나오고,
-원시결과와 엔티티를 반환한다.
+원시결과와 엔티티를 반환하는 것을 알 수 있다.
+위를 통해 원시데이터를 가져와 엔티티화 시키는 것을 알 수 있었다.
 
 그럼 원시결과가 아닌 엔티티를 반환하는 `getMany()`에서의 특징은 무엇이 있을까?
 
