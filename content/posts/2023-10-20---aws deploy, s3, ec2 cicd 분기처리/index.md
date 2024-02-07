@@ -22,8 +22,7 @@ dev와 main 둘 다 같은 방식으로 진행을 했던터라 codedeploy 과정
 
 github contexts로 브랜치에 따라 다른 스크립트 파일을 만들어 해결할 수 있을거라는 생각으로 시도를 했었다.
 
-<a href='https://docs.github.com/en/actions/learn-github-actions/contexts'>
-위 링크를 참조하여 브랜치에 따라 스크립트 파일을 만들어서 보내주는 방식으로 진행을 했었다.
+<a href='https://docs.github.com/en/actions/learn-github-actions/contexts'>링크</a>를 참조하여 브랜치에 따라 스크립트 파일을 만들어서 보내주는 방식으로 진행을 했었다.
 
 첫번째로 권한에러가 나왔다. workflow에서 만든 스크립트 파일에 대해 ec2에서 실행권한이 없는 문제였다.
 권한을 부여해주고 나서 다시 github action을 다시 시도해보았으나 권한 문제가 해결되지 않았다.
