@@ -1,4 +1,316 @@
-<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[개발 블로그]]></title><description><![CDATA[개발 블로그]]></description><link>http://github.com/dylang/node-rss</link><generator>GatsbyJS</generator><lastBuildDate>Fri, 09 Feb 2024 03:17:21 GMT</lastBuildDate><item><title><![CDATA[외래키 변경하기]]></title><description><![CDATA[외래키 변경하기]]></description><link>https://1005jh.github.io//posts/2023-11-20---외래키 변경하기/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-11-20---외래키 변경하기/</guid><pubDate>Mon, 20 Nov 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;aliy 프로젝트 중 외래키를 변경해야 하는 일이 생겼다.&lt;/p&gt;
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[개발 블로그]]></title><description><![CDATA[개발 블로그]]></description><link>http://github.com/dylang/node-rss</link><generator>GatsbyJS</generator><lastBuildDate>Sat, 10 Feb 2024 09:40:54 GMT</lastBuildDate><item><title><![CDATA[docker를 활용한 mysql slave db]]></title><description><![CDATA[docker를 활용한 mysql slave db]]></description><link>https://1005jh.github.io//posts/2023-12-05---docker를 활용한 mysql slave db/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-12-05---docker를 활용한 mysql slave db/</guid><pubDate>Tue, 05 Dec 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;jmeter를 활용해 테스트를 진행 중 master, slave db를 적용한 환경에서의 테스트가 필요했다.
+하지만 실제 db에 replication을 적용해 테스트를 진행하기에는 비용적으로 너무 소모가 심했다.
+그래서 로컬환경에서 테스트를 하기 위해 docker를 활용하여 mysql의 master, slave 환경을 구성했다.&lt;/p&gt;
+&lt;p&gt;참고할 많은 자료가 있지만 이 &lt;a href=&quot;https://velog.io/@hyunho058/Mysql-%EB%B6%84%EC%82%B0%EC%B2%98%EB%A6%ACReplication-with-docker&quot;&gt;블로그&lt;/a&gt;가 정리가 잘 되어있어 참고해 작업을 진행했고, spring 환경에서의 적용이 필요하면 참고하면 좋을 것 같다. 그러면 nestjs 환경에서 docker를 활용해 mysql의 master, slave 세팅을 시작해보자.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;app
+├── docker-compose.yml
+├── src
+├── master
+    ├── Dockerfile
+    └── my.cnf
+└── slave
+    ├── Dockerfile
+    └── my.cnf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;구조는 위와같이 되어있다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yml&quot;&gt;&lt;pre class=&quot;language-yml&quot;&gt;&lt;code class=&quot;language-yml&quot;&gt;&lt;span class=&quot;token key atrule&quot;&gt;version&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;3&quot;&lt;/span&gt;
+&lt;span class=&quot;token key atrule&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;token key atrule&quot;&gt;db-write&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; ./
+      &lt;span class=&quot;token key atrule&quot;&gt;dockerfile&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; master/Dockerfile
+    &lt;span class=&quot;token key atrule&quot;&gt;restart&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; always
+    &lt;span class=&quot;token key atrule&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;MYSQL_DATABASE&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;aliy&quot;&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;MYSQL_USER&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;user&quot;&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;MYSQL_PASSWORD&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;password&quot;&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;MYSQL_ROOT_PASSWORD&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;password&quot;&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;3321:3306&quot;&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; master&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;/var/lib/mysql
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; master&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;/var/lib/mysql&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;files
+
+  &lt;span class=&quot;token key atrule&quot;&gt;db-read&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; ./
+      &lt;span class=&quot;token key atrule&quot;&gt;dockerfile&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; slave/Dockerfile
+    &lt;span class=&quot;token key atrule&quot;&gt;restart&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; always
+    &lt;span class=&quot;token key atrule&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;MYSQL_DATABASE&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;aliy&quot;&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;MYSQL_USER&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;user&quot;&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;MYSQL_PASSWORD&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;password&quot;&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;MYSQL_ROOT_PASSWORD&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;password&quot;&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;3322:3306&quot;&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; slave&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;/var/lib/mysql
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; slave&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;/var/lib/mysql&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;files
+
+&lt;span class=&quot;token key atrule&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;token key atrule&quot;&gt;master&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+  slave&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위처럼 yml파일을 작성을 해주고, 각 master, slave에 대한 dockerfile을 만들어줘야 한다.
+우선 master에 대한 파일이다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;dockerfile&quot;&gt;&lt;pre class=&quot;language-dockerfile&quot;&gt;&lt;code class=&quot;language-dockerfile&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;# master&lt;/span&gt;
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;FROM&lt;/span&gt; mysql:8.0.33&lt;/span&gt;
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;ADD&lt;/span&gt; ./master/my.cnf /etc/mysql/my.cnf&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;cnf&quot;&gt;&lt;pre class=&quot;language-cnf&quot;&gt;&lt;code class=&quot;language-cnf&quot;&gt;&amp;lt;!-- master my.cnf --&amp;gt;
+[mysqld]
+log_bin = mysql-bin
+server_id = 10
+binlog_do_db=aliy
+default_authentication_plugin=mysql_native_password&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;아래는 slave에 대한 파일이다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;dockerfile&quot;&gt;&lt;pre class=&quot;language-dockerfile&quot;&gt;&lt;code class=&quot;language-dockerfile&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;# slave&lt;/span&gt;
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;FROM&lt;/span&gt; mysql:8.0.33&lt;/span&gt;
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;ADD&lt;/span&gt; ./slave/my.cnf /etc/mysql/my.cnf&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;cnf&quot;&gt;&lt;pre class=&quot;language-cnf&quot;&gt;&lt;code class=&quot;language-cnf&quot;&gt;&amp;lt;!-- slave my.cnf --&amp;gt;
+[mysqld]
+log_bin = mysql-bin
+server_id = 11
+relay_log = /var/lib/mysql/mysql-relay-bin
+log_slave_updates = &amp;#39;ON&amp;#39;
+read_only = &amp;#39;ON&amp;#39;
+default_authentication_plugin=mysql_native_password&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위와 같이 작업이 끝나면 &lt;code class=&quot;language-text&quot;&gt;docker-compose up -d&lt;/code&gt; 명령어를 통해 실행을 시켜준다.&lt;/p&gt;
+&lt;p&gt;성공적으로 실행이 되었다면 master db에 접속을 한다. 접속 후 terminal tab으로 이동 후 &lt;code class=&quot;language-text&quot;&gt;mysql -u root -p&lt;/code&gt;를 통해 접속 후 아래 명령어를 차례로 입력해준다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sql&quot;&gt;&lt;pre class=&quot;language-sql&quot;&gt;&lt;code class=&quot;language-sql&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;user&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&apos;replicationUser&apos;&lt;/span&gt;&lt;span class=&quot;token variable&quot;&gt;@&apos;%&apos;&lt;/span&gt; identified &lt;span class=&quot;token keyword&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&apos;password&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;GRANT&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;REPLICATION&lt;/span&gt; SLAVE &lt;span class=&quot;token keyword&quot;&gt;ON&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;TO&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&apos;replicationUser&apos;&lt;/span&gt;&lt;span class=&quot;token variable&quot;&gt;@&apos;%&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위 명령어는 사용자를 생성하고, 권한을 부여하는 명령어이다. 사용자 생성과정에서 에러가 생긴다면 생성된 유저인지 체크를 해보면 된다.
+작업이 완료되면 &lt;code class=&quot;language-text&quot;&gt;show master status;&lt;/code&gt;명령어를 통해 file과 position을 확인해준다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sql&quot;&gt;&lt;pre class=&quot;language-sql&quot;&gt;&lt;code class=&quot;language-sql&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;show&lt;/span&gt; master &lt;span class=&quot;token keyword&quot;&gt;status&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token comment&quot;&gt;-- 결과&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;------------------+----------+--------------+------------------+-------------------+&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;File&lt;/span&gt;             &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; Position &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; Binlog_Do_DB &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; Binlog_Ignore_DB &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; Executed_Gtid_Set &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;------------------+----------+--------------+------------------+-------------------+&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; mysql&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;bin&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;000003&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;      &lt;span class=&quot;token number&quot;&gt;682&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; aliy         &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;                  &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;                   &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;------------------+----------+--------------+------------------+-------------------+&lt;/span&gt;
+&lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;0.00&lt;/span&gt; sec&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;그 후 master의 &lt;code class=&quot;language-text&quot;&gt;IPv4Address&lt;/code&gt;를 확인하기 위해 터미널로 돌아와 &lt;code class=&quot;language-text&quot;&gt;docker network ls&lt;/code&gt;를 해준다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;NETWORK ID     NAME             DRIVER    SCOPE
+772bbbb08bb5   aliy_net-mysql   bridge    local&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;이처럼 뜨는 걸 확인할 수 있는데 여기서 name을 이용해 &lt;code class=&quot;language-text&quot;&gt;docker inspect aliy_net-mysql&lt;/code&gt; 명령어를 입력해준다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;[
+    {
+        &quot;Name&quot;: &quot;aliy_net-mysql&quot;,
+        &quot;Id&quot;: &quot;772bbbb08bb5934a6714c33e7c5287a3a54596e33d1d8344bdd486d29ff839af&quot;,
+        &quot;Scope&quot;: &quot;local&quot;,
+        &quot;Driver&quot;: &quot;bridge&quot;,
+        &quot;EnableIPv6&quot;: false,
+        &quot;IPAM&quot;: {
+            &quot;Driver&quot;: &quot;default&quot;,
+            &quot;Options&quot;: null,
+            &quot;Config&quot;: [
+                {
+                    &quot;Subnet&quot;: &quot;172.26.0.0/16&quot;,
+                    &quot;Gateway&quot;: &quot;172.26.0.1&quot;
+                }
+            ]
+        },
+        &quot;Internal&quot;: false,
+        &quot;Attachable&quot;: false,
+        &quot;Ingress&quot;: false,
+        &quot;ConfigFrom&quot;: {
+            &quot;Network&quot;: &quot;&quot;
+        },
+        &quot;ConfigOnly&quot;: false,
+        &quot;Containers&quot;: {
+            &quot;30be0d7d3169a2f7f33527972e0c5deaccf9b9e00b5e93d7678d9e7b0ff58f6c&quot;: {
+                &quot;Name&quot;: &quot;aliy-db-read-1&quot;,
+                &quot;EndpointID&quot;: &quot;4110530eb5f723f249fe4befd0ccb3ab0b292b16383e592cdeeffbf310163aee&quot;,
+                &quot;MacAddress&quot;: &quot;02:42:ac:1a:00:02&quot;,
+                &quot;IPv4Address&quot;: &quot;172.26.0.2/16&quot;,
+                &quot;IPv6Address&quot;: &quot;&quot;
+            },
+            &quot;9e110b4581ffd76c1202e6d84e04e9fdd6e2670a1b994f94cf233c66b7a62111&quot;: {
+                &quot;Name&quot;: &quot;aliy-db-write-1&quot;,
+                &quot;EndpointID&quot;: &quot;f35911e2ca400f7cd49cc45e16d5b7296ffd190cfcfd0d941f95f1aa8a084ba7&quot;,
+                &quot;MacAddress&quot;: &quot;02:42:ac:1a:00:03&quot;,
+                &quot;IPv4Address&quot;: &quot;172.26.0.3/16&quot;,
+                &quot;IPv6Address&quot;: &quot;&quot;
+            }
+        },
+        &quot;Options&quot;: {},
+        &quot;Labels&quot;: {
+            &quot;com.docker.compose.network&quot;: &quot;net-mysql&quot;,
+            &quot;com.docker.compose.project&quot;: &quot;aliy&quot;,
+            &quot;com.docker.compose.version&quot;: &quot;2.15.1&quot;
+        }
+    }
+]&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;그러면 위와같이 나오는 걸 확인할 수 있고 여기서 얻은 정보들로 slave db에 접속해 세팅을 하면 된다.
+slave db에 접속 후&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sql&quot;&gt;&lt;pre class=&quot;language-sql&quot;&gt;&lt;code class=&quot;language-sql&quot;&gt;CHANGE MASTER &lt;span class=&quot;token keyword&quot;&gt;TO&lt;/span&gt; MASTER_HOST&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;172.26.0.3&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;-- write db의 IPv4Address&lt;/span&gt;
+MASTER_USER&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;replicationUser&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;-- write db에서 생성한 유저의 이름&lt;/span&gt;
+MASTER_PASSWORD&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;password&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;-- write db에서 생성한 유저의 password&lt;/span&gt;
+MASTER_LOG_FILE&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;mysql-bin.000003&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;-- write db에서 show master status;를 통해 확인한 file&lt;/span&gt;
+MASTER_LOG_POS&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;682&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;-- wirte db에서 show master status;를 통해 확인한 position&lt;/span&gt;
+GET_MASTER_PUBLIC_KEY&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위와 같이 입력해준다.
+이후 slave를 시작해주고, 확인을 해보면&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sql&quot;&gt;&lt;pre class=&quot;language-sql&quot;&gt;&lt;code class=&quot;language-sql&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;start&lt;/span&gt; slave&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;show&lt;/span&gt; slave &lt;span class=&quot;token keyword&quot;&gt;status&lt;/span&gt;\G&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token comment&quot;&gt;-- 결과&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1.&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;
+               Slave_IO_State: Waiting &lt;span class=&quot;token keyword&quot;&gt;for&lt;/span&gt; source &lt;span class=&quot;token keyword&quot;&gt;to&lt;/span&gt; send event
+                  Master_Host: &lt;span class=&quot;token number&quot;&gt;172.26&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;.0&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;.3&lt;/span&gt;
+                  Master_User: replicationUser
+                  Master_Port: &lt;span class=&quot;token number&quot;&gt;3306&lt;/span&gt;
+                Connect_Retry: &lt;span class=&quot;token number&quot;&gt;60&lt;/span&gt;
+              Master_Log_File: mysql&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;bin&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;000003&lt;/span&gt;
+          Read_Master_Log_Pos: &lt;span class=&quot;token number&quot;&gt;682&lt;/span&gt;
+               Relay_Log_File: mysql&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;relay&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;bin&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;000002&lt;/span&gt;
+                Relay_Log_Pos: &lt;span class=&quot;token number&quot;&gt;326&lt;/span&gt;
+        Relay_Master_Log_File: mysql&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;bin&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;000003&lt;/span&gt;
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB:
+          Replicate_Ignore_DB:
+           Replicate_Do_Table:
+       Replicate_Ignore_Table:
+      Replicate_Wild_Do_Table:
+  Replicate_Wild_Ignore_Table:
+                   Last_Errno: &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;
+                   Last_Error:
+                 Skip_Counter: &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;
+          Exec_Master_Log_Pos: &lt;span class=&quot;token number&quot;&gt;682&lt;/span&gt;
+              Relay_Log_Space: &lt;span class=&quot;token number&quot;&gt;536&lt;/span&gt;
+              Until_Condition: None
+               Until_Log_File:
+                Until_Log_Pos: &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;
+           Master_SSL_Allowed: &lt;span class=&quot;token keyword&quot;&gt;No&lt;/span&gt;
+           Master_SSL_CA_File:
+           Master_SSL_CA_Path:
+              Master_SSL_Cert:
+            Master_SSL_Cipher:
+               Master_SSL_Key:
+        Seconds_Behind_Master: &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;
+Master_SSL_Verify_Server_Cert: &lt;span class=&quot;token keyword&quot;&gt;No&lt;/span&gt;
+                Last_IO_Errno: &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;
+                Last_IO_Error:
+               Last_SQL_Errno: &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;
+               Last_SQL_Error:
+  Replicate_Ignore_Server_Ids:
+             Master_Server_Id: &lt;span class=&quot;token number&quot;&gt;13&lt;/span&gt;
+                  Master_UUID: c03c121d&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;c7f1&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;11&lt;/span&gt;ee&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;9&lt;/span&gt;d4a&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;0242&lt;/span&gt;ac1a0003
+             Master_Info_File: mysql&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;slave_master_info
+                    SQL_Delay: &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;
+          SQL_Remaining_Delay: &lt;span class=&quot;token boolean&quot;&gt;NULL&lt;/span&gt;
+      Slave_SQL_Running_State: Replica has &lt;span class=&quot;token keyword&quot;&gt;read&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;all&lt;/span&gt; relay log&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; waiting &lt;span class=&quot;token keyword&quot;&gt;for&lt;/span&gt; more updates
+           Master_Retry_Count: &lt;span class=&quot;token number&quot;&gt;86400&lt;/span&gt;
+                  Master_Bind:
+      Last_IO_Error_Timestamp:
+     Last_SQL_Error_Timestamp:
+               Master_SSL_Crl:
+           Master_SSL_Crlpath:
+           Retrieved_Gtid_Set:
+            Executed_Gtid_Set:
+                Auto_Position: &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;
+         Replicate_Rewrite_DB:
+                 Channel_Name:
+           Master_TLS_Version:
+       Master_public_key_path:
+        Get_master_public_key: &lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;
+            Network_Namespace:
+&lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt; warning &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;0.00&lt;/span&gt; sec&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위처럼 나온다. 여기서&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;Slave_IO_Running: Yes
+Slave_SQL_Running: Yes&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;이 두 옵션이 중요하다. No로 표기되어 있으면 연동되지 않은 것이다.&lt;/p&gt;
+&lt;p&gt;그러면 프로젝트로 돌아와 &lt;code class=&quot;language-text&quot;&gt;config&lt;/code&gt;설정을 해준다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;app
+└── src
+    └── config
+          ├── typeorm.config.ts
+          └── app.config.ts&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위의 두개의 파일을 세팅을 아래와 같이 해준다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;javascript&quot;&gt;&lt;pre class=&quot;language-javascript&quot;&gt;&lt;code class=&quot;language-javascript&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;// config/typeorm.config.ts&lt;/span&gt;
+&lt;span class=&quot;token keyword&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token function-variable function&quot;&gt;databaseConfig&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;token literal-property property&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;mysql&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;token literal-property property&quot;&gt;entities&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;dist/**/*.entity{.ts,.js}&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;token literal-property property&quot;&gt;migrations&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;dist/migrations/*{.ts,.js}&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;token literal-property property&quot;&gt;replication&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;token literal-property property&quot;&gt;master&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;localhost&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;3321&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;username&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;root&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;database&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;aliy&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;token literal-property property&quot;&gt;slaves&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;token literal-property property&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;localhost&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;token literal-property property&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;3322&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;token literal-property property&quot;&gt;read&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token boolean&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;token literal-property property&quot;&gt;username&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;root&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;token literal-property property&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;token literal-property property&quot;&gt;database&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;aliy&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;token literal-property property&quot;&gt;synchronize&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token boolean&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;여기서 slaves는 &lt;code class=&quot;language-text&quot;&gt;ConnectionOptions&lt;/code&gt;에서 반복문으로 돌며 작업하기 때문에 배열형식으로 하지 않으면 안된다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;js&quot;&gt;&lt;pre class=&quot;language-js&quot;&gt;&lt;code class=&quot;language-js&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;// config/app.config.ts&lt;/span&gt;
+&lt;span class=&quot;token keyword&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; databaseConfig &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;./typeorm.config&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;token literal-property property&quot;&gt;database&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;databaseConfig&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위와 같이 세팅이 끝나면 app.module.ts로 가서&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;js&quot;&gt;&lt;pre class=&quot;language-js&quot;&gt;&lt;code class=&quot;language-js&quot;&gt;@&lt;span class=&quot;token function&quot;&gt;Module&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;token literal-property property&quot;&gt;imports&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;
+    &lt;span class=&quot;token operator&quot;&gt;...&lt;/span&gt;
+    ConfigModule&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;forRoot&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;isGlobal&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token boolean&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;load&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;appConfig&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+    TypeOrmModule&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;forRootAsync&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;imports&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;ConfigModule&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;token function-variable function&quot;&gt;useFactory&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token parameter&quot;&gt;&lt;span class=&quot;token literal-property property&quot;&gt;configService&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; ConfigService&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; config &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; configService&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;get&lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt;ConnectionOptions&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;database&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; config&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;token literal-property property&quot;&gt;inject&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;ConfigService&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;token operator&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;...&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위와 같이 작성을 해주고, &lt;code class=&quot;language-text&quot;&gt;npm run start&lt;/code&gt;를 통해 애플리케이션을 실행해준다.&lt;/p&gt;
+&lt;p&gt;그러고 docker에서 master, slave를 접속해서 확인을 해본다면&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sql&quot;&gt;&lt;pre class=&quot;language-sql&quot;&gt;&lt;code class=&quot;language-sql&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;show&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;databases&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token comment&quot;&gt;-- 결과&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;--------------------+&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;Database&lt;/span&gt;           &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;--------------------+&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; aliy               &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; information_schema &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; mysql              &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; performance_schema &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt; sys                &lt;span class=&quot;token operator&quot;&gt;|&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;--------------------+&lt;/span&gt;
+&lt;span class=&quot;token number&quot;&gt;5&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;0.02&lt;/span&gt; sec&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;위처럼 설정해준 db가 master, slave에 뜨는 걸 확인할 수 있다.
+test로 유저를 넣고, master, slave에 작 적용이 되어 있는지 확인하면 된다.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sql&quot;&gt;&lt;pre class=&quot;language-sql&quot;&gt;&lt;code class=&quot;language-sql&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;use&lt;/span&gt; aliy&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;user&lt;/span&gt;\G&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token comment&quot;&gt;-- 결과&lt;/span&gt;
+&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1.&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;
+       createdAt: &lt;span class=&quot;token number&quot;&gt;2023&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;12&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;05&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;09&lt;/span&gt;:&lt;span class=&quot;token number&quot;&gt;20&lt;/span&gt;:&lt;span class=&quot;token number&quot;&gt;35.399988&lt;/span&gt;
+       updatedAt: &lt;span class=&quot;token number&quot;&gt;2023&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;12&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;05&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;09&lt;/span&gt;:&lt;span class=&quot;token number&quot;&gt;20&lt;/span&gt;:&lt;span class=&quot;token number&quot;&gt;35.399988&lt;/span&gt;
+              id: &lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;
+        nickname: &lt;span class=&quot;token boolean&quot;&gt;NULL&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;0.00&lt;/span&gt; sec&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;적용이 잘 되었다면 위와같이 확인해볼 수 있을 것이다.&lt;/p&gt;
+&lt;p&gt;참고&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://velog.io/@hyunho058/Mysql-%EB%B6%84%EC%82%B0%EC%B2%98%EB%A6%ACReplication-with-docker&quot;&gt;&lt;a href=&quot;https://velog.io/@hyunho058/Mysql-%EB%B6%84%EC%82%B0%EC%B2%98%EB%A6%ACReplication-with-docker&quot; target=&quot;_blank&quot; rel=&quot;nofollow noopener noreferrer&quot;&gt;https://velog.io/@hyunho058/Mysql-%EB%B6%84%EC%82%B0%EC%B2%98%EB%A6%ACReplication-with-docker&lt;/a&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://jupiny.com/2017/11/07/docker-mysql-replicaiton/&quot;&gt;&lt;a href=&quot;https://jupiny.com/2017/11/07/docker-mysql-replicaiton/&quot; target=&quot;_blank&quot; rel=&quot;nofollow noopener noreferrer&quot;&gt;https://jupiny.com/2017/11/07/docker-mysql-replicaiton/&lt;/a&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://docs.docker.com/&quot;&gt;&lt;a href=&quot;https://docs.docker.com/&quot; target=&quot;_blank&quot; rel=&quot;nofollow noopener noreferrer&quot;&gt;https://docs.docker.com/&lt;/a&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[외래키 변경하기]]></title><description><![CDATA[외래키 변경하기]]></description><link>https://1005jh.github.io//posts/2023-11-20---외래키 변경하기/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-11-20---외래키 변경하기/</guid><pubDate>Mon, 20 Nov 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;aliy 프로젝트 중 외래키를 변경해야 하는 일이 생겼다.&lt;/p&gt;
 &lt;p&gt;각 카테고리에 대한 uniqueid를 외래키로 사용중이었는데 방식이 바뀌며 uniqueid를 사용하지 않게되어 pk로 변경을 해야했다.&lt;/p&gt;
 &lt;p&gt;그래서 변경하는 과정을 포스팅을 해보겠다.&lt;/p&gt;
 &lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sql&quot;&gt;&lt;pre class=&quot;language-sql&quot;&gt;&lt;code class=&quot;language-sql&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;CREATE&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;TABLE&lt;/span&gt; 테이블 &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;
@@ -36,7 +348,9 @@ id &lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt; &lt;span class=&
 &lt;span class=&quot;token keyword&quot;&gt;references&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&apos;mainCategory&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;id&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
 &lt;span class=&quot;token keyword&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;cascade&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;위의 작업이 성공했다면 mainCategoryId에 대한 값이 uniqueId -&gt; pk로 변경이 완료된다.&lt;/p&gt;
-&lt;p&gt;비즈니스 로직 변경도 필요하다.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[외래키 cascade 추가하기]]></title><description><![CDATA[외래키 cascade 추가하기]]></description><link>https://1005jh.github.io//posts/2023-11-10---외래키 cascade 추가하기/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-11-10---외래키 cascade 추가하기/</guid><pubDate>Fri, 10 Nov 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;&lt;code class=&quot;language-text&quot;&gt;cascade&lt;/code&gt;는 mysql의 외래키 옵션 중 하나로 무결성을 유지하며 연결된 레코드의 작업을 자동으로 해주는 옵션이다.
+&lt;p&gt;비즈니스 로직 변경도 필요하다.&lt;/p&gt;
+&lt;p&gt;참고&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html&quot;&gt;&lt;a href=&quot;https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html&quot; target=&quot;_blank&quot; rel=&quot;nofollow noopener noreferrer&quot;&gt;https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html&lt;/a&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[외래키 cascade 추가하기]]></title><description><![CDATA[외래키 cascade 추가하기]]></description><link>https://1005jh.github.io//posts/2023-11-10---외래키 cascade 추가하기/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-11-10---외래키 cascade 추가하기/</guid><pubDate>Fri, 10 Nov 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;&lt;code class=&quot;language-text&quot;&gt;cascade&lt;/code&gt;는 mysql의 외래키 옵션 중 하나로 무결성을 유지하며 연결된 레코드의 작업을 자동으로 해주는 옵션이다.
 부모에서 &lt;code class=&quot;language-text&quot;&gt;update&lt;/code&gt;나 &lt;code class=&quot;language-text&quot;&gt;delete&lt;/code&gt;작업이 자식에게도 반영이 된다.&lt;/p&gt;
 &lt;p&gt;이 옵션을 설정해주지 않는다면 부모에서의 &lt;code class=&quot;language-text&quot;&gt;update&lt;/code&gt;나 &lt;code class=&quot;language-text&quot;&gt;delete&lt;/code&gt; 작업에서 에러를 마주할 수 있다. 어떤 에러가 발생했고 어떻게 해결했는지 포스팅해보겠다.&lt;/p&gt;
 &lt;p&gt;aliy 프로젝트를 진행하며 카테고리를 매핑하는 테이블을 만들었었다.&lt;/p&gt;
@@ -87,7 +401,9 @@ The foreign key can be self referential (referring to the same table). When you 
 &lt;span class=&quot;token keyword&quot;&gt;REFERENCES&lt;/span&gt; 부모테이블 &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;uniqueId&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
 &lt;span class=&quot;token keyword&quot;&gt;ON&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;DELETE&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;CASCADE&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
 &lt;span class=&quot;token keyword&quot;&gt;ON&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;UPDATE&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;CASCADE&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;위와 같은 방법으로 넣어주고 에러를 해결할 수 있다.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[aws deploy, s3, ec2 cicd 분기처리]]></title><description><![CDATA[aws deploy, s3, ec2 cicd 분기처리]]></description><link>https://1005jh.github.io//posts/2023-10-20---aws deploy, s3, ec2 cicd 분기처리/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-10-20---aws deploy, s3, ec2 cicd 분기처리/</guid><pubDate>Fri, 20 Oct 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;진행중인 aliy 프로젝트에서 aws s3와 codedeploy를 사용해 ec2에 자동배포를 했었다.
+&lt;p&gt;위와 같은 방법으로 넣어주고 에러를 해결할 수 있다.&lt;/p&gt;
+&lt;p&gt;참고&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html#foreign-key-adding&quot;&gt;&lt;a href=&quot;https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html#foreign-key-adding&quot; target=&quot;_blank&quot; rel=&quot;nofollow noopener noreferrer&quot;&gt;https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html#foreign-key-adding&lt;/a&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[aws deploy, s3, ec2 cicd 분기처리]]></title><description><![CDATA[aws deploy, s3, ec2 cicd 분기처리]]></description><link>https://1005jh.github.io//posts/2023-10-20---aws deploy, s3, ec2 cicd 분기처리/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-10-20---aws deploy, s3, ec2 cicd 분기처리/</guid><pubDate>Fri, 20 Oct 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;진행중인 aliy 프로젝트에서 aws s3와 codedeploy를 사용해 ec2에 자동배포를 했었다.
 dev와 main 둘 다 같은 방식으로 진행을 했던터라 codedeploy 과정에서 애플리케이션을 실행하는 방식이 달랐다.&lt;/p&gt;
 &lt;p&gt;이 문제를 해결하기 위해 어떤 방식이 있을지 고민했던 것들을 적어보겠다.&lt;/p&gt;
 &lt;h3 id=&quot;1-workflow에서-해결&quot; style=&quot;position:relative;&quot;&gt;&lt;a href=&quot;#1-workflow%EC%97%90%EC%84%9C-%ED%95%B4%EA%B2%B0&quot; aria-label=&quot;1 workflow에서 해결 permalink&quot; class=&quot;anchor before&quot;&gt;&lt;svg aria-hidden=&quot;true&quot; focusable=&quot;false&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;1. workflow에서 해결&lt;/h3&gt;
@@ -153,7 +469,11 @@ hooks:
 &lt;p&gt;결국 하나의 스크립트로 해결할 수 있었다.&lt;/p&gt;
 &lt;h3 id=&quot;마치며&quot; style=&quot;position:relative;&quot;&gt;&lt;a href=&quot;#%EB%A7%88%EC%B9%98%EB%A9%B0&quot; aria-label=&quot;마치며 permalink&quot; class=&quot;anchor before&quot;&gt;&lt;svg aria-hidden=&quot;true&quot; focusable=&quot;false&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;마치며&lt;/h3&gt;
 &lt;p&gt;위 작업들을 하며 스크립트 파일을 통해 여러가지 작업을 할 수 있다는 걸 느낄 수 있었다. 물론 지금 해결한 방식보다 좋은 방식도 있을거라 생각하고 찾아보며 시도하고 적용해봐야겠다.
-1번 workflow를 사용하는 과정에서 권한문제에 관한 건 무엇때문인지 왜 그런건지 조금 더 찾아봐야 할 것 같다.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[typeorm getMany(), getRawMany()]]></title><description><![CDATA[typeorm getMany(), getRawMany()]]></description><link>https://1005jh.github.io//posts/2023-10-10---typeorm getMany(), getRawMany()/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-10-10---typeorm getMany(), getRawMany()/</guid><pubDate>Tue, 10 Oct 2023 22:36:37 GMT</pubDate><content:encoded>&lt;p&gt;쿼리빌더를 사용할 때 쓰게되는 getMany()와 getRawMany()
+1번 workflow를 사용하는 과정에서 권한문제에 관한 건 무엇때문인지 왜 그런건지 조금 더 찾아봐야 할 것 같다.&lt;/p&gt;
+&lt;p&gt;참고
+&lt;a href=&quot;https://docs.github.com/en/actions/learn-github-actions/contexts&quot;&gt;&lt;a href=&quot;https://docs.github.com/en/actions/learn-github-actions/contexts&quot; target=&quot;_blank&quot; rel=&quot;nofollow noopener noreferrer&quot;&gt;https://docs.github.com/en/actions/learn-github-actions/contexts&lt;/a&gt;&lt;/a&gt;
+&lt;a href=&quot;https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-example.html&quot;&gt;&lt;a href=&quot;https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-example.html&quot; target=&quot;_blank&quot; rel=&quot;nofollow noopener noreferrer&quot;&gt;https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-example.html&lt;/a&gt;&lt;/a&gt;
+&lt;a href=&quot;https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html&quot;&gt;&lt;a href=&quot;https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html&quot; target=&quot;_blank&quot; rel=&quot;nofollow noopener noreferrer&quot;&gt;https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html&lt;/a&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[typeorm getMany(), getRawMany()]]></title><description><![CDATA[typeorm getMany(), getRawMany()]]></description><link>https://1005jh.github.io//posts/2023-10-10---typeorm getMany(), getRawMany()/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-10-10---typeorm getMany(), getRawMany()/</guid><pubDate>Tue, 10 Oct 2023 22:36:37 GMT</pubDate><content:encoded>&lt;p&gt;쿼리빌더를 사용할 때 쓰게되는 getMany()와 getRawMany()
 이 둘의 차이를 알아보자.&lt;/p&gt;
 &lt;p&gt;우선 getMany()를 타고 들어가보면&lt;/p&gt;
 &lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;typescript&quot;&gt;&lt;pre class=&quot;language-typescript&quot;&gt;&lt;code class=&quot;language-typescript&quot;&gt;&lt;span class=&quot;token function&quot;&gt;getMany&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;Promise&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt;Entity&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
