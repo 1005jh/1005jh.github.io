@@ -16,7 +16,7 @@ jmeter를 활용해 테스트를 진행 중 master, slave db를 적용한 환경
 하지만 실제 db에 replication을 적용해 테스트를 진행하기에는 비용적으로 너무 소모가 심했다.
 그래서 로컬환경에서 테스트를 하기 위해 docker를 활용하여 mysql의 master, slave 환경을 구성했다.
 
-참고할 많은 자료가 있지만 이 <a href="https://velog.io/@hyunho058/Mysql-%EB%B6%84%EC%82%B0%EC%B2%98%EB%A6%ACReplication-with-docker">블로그</a>가 정리가 잘 되어있어 참고해 작업을 진행했고, spring 환경에서의 적용이 필요하면 참고하면 좋다. 그러면 nestjs 환경에서 docker를 활용해 mysql의 master, slave 세팅을 시작해보자.
+참고할 많은 자료가 있지만 이 <a href="https://velog.io/@hyunho058/Mysql-%EB%B6%84%EC%82%B0%EC%B2%98%EB%A6%ACReplication-with-docker">블로그</a>가 정리가 잘 되어있어 참고해 작업을 진행했고, spring 환경에서의 적용이 필요하면 참고하면 좋을 것 같다. 그러면 nestjs 환경에서 docker를 활용해 mysql의 master, slave 세팅을 시작해보자.
 
 ```
 app
