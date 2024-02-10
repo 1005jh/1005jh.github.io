@@ -102,3 +102,8 @@ fi
 
 위 작업들을 하며 스크립트 파일을 통해 여러가지 작업을 할 수 있다는 걸 느낄 수 있었다. 물론 지금 해결한 방식보다 좋은 방식도 있을거라 생각하고 찾아보며 시도하고 적용해봐야겠다.
 1번 workflow를 사용하는 과정에서 권한문제에 관한 건 무엇때문인지 왜 그런건지 조금 더 찾아봐야 할 것 같다.
+
+참고
+<a href="https://docs.github.com/en/actions/learn-github-actions/contexts">https://docs.github.com/en/actions/learn-github-actions/contexts</a>
+<a href="https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-example.html">https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-example.html</a>
+<a href="https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html">https://docs.aws.amazon.com/ko_kr/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html</a>

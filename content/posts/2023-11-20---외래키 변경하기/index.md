@@ -75,3 +75,7 @@ on update cascade
 위의 작업이 성공했다면 mainCategoryId에 대한 값이 uniqueId -> pk로 변경이 완료된다.
 
 비즈니스 로직 변경도 필요하다.
+
+참고
+
+<a href="https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html">https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html</a>

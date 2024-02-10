@@ -399,3 +399,11 @@ select * from user\G;
 ```
 
 적용이 잘 되었다면 위와같이 확인해볼 수 있을 것이다.
+
+참고
+
+<a href="https://velog.io/@hyunho058/Mysql-%EB%B6%84%EC%82%B0%EC%B2%98%EB%A6%ACReplication-with-docker">https://velog.io/@hyunho058/Mysql-%EB%B6%84%EC%82%B0%EC%B2%98%EB%A6%ACReplication-with-docker</a>
+
+<a href="https://jupiny.com/2017/11/07/docker-mysql-replicaiton/">https://jupiny.com/2017/11/07/docker-mysql-replicaiton/</a>
+
+<a href="https://docs.docker.com/">https://docs.docker.com/</a>

@@ -89,3 +89,7 @@ ON UPDATE CASCADE;
 ```
 
 위와 같은 방법으로 넣어주고 에러를 해결할 수 있다.
+
+참고
+
+<a href="https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html#foreign-key-adding">https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html#foreign-key-adding</a>
