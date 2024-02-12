@@ -11,6 +11,7 @@ tags:
   - "jmeter"
 
 description: "jmeter 테스트 (mysql master, slave)"
+socialImage: "/media/단일%20add%202.png"
 ---
 
 aliy 서비스는 리뷰가 메인이다. 리뷰라는 것의 특성상 쓰기보다는 읽기요청이 많을 것이라는게 예상되었고, 사용자가 많아졌을 때 적용할 수 있는 cqrs패턴을 사용해 데이터베이스를 분리했을 때와 분리하지 않았을 때의 성능차이를 보기위해 테스트를 진행하게 되었다.
@@ -26,24 +27,24 @@ aliy 서비스에서 가장 많이 일어날 수 있는 일은 리뷰 등록과 
 
 ### 데이터베이스 분리 전
 
-![분리 전 리뷰 등록 Aggregate Report](/media/단일%20add%202.png)
-![분리 전 리뷰 등록 Summary Report](/media/단일%20add%201.png)
-![분리 전 리스트 요청 Aggregate Report](/content/posts/2023-12-15---jmeter%20테스트/media/단일%20list%201.png)
-![분리 전 리스트 요청 Summary Report](/content/posts/2023-12-15---jmeter%20테스트/media/단일%20list%202.png)
+![분리 전 리뷰 등록 Aggregate Report](./1.png)
+![분리 전 리뷰 등록 Summary Report](./2.png)
+![분리 전 리스트 요청 Aggregate Report](./3.png)
+![분리 전 리스트 요청 Summary Report](./4.png)
 위는 분리하기 전의 결과이다. 분리하기 전의 등록요청은 총 1만개의 실행이 평균 응답시간은 26초로 99%를 처리하는데 있어 43초가 걸린다고 나왔다. 그러나 표준편차가 큰 것을 확인할 수 있었다.
 리스트 요청은 등록요청보다는 적은 수치가 나왔다. 총 1만개의 실행이 평균 응답시간 21초로 99%를 처리하는데 있어 30초가 걸리며 표준편차 또한 등록요청보다 낮게 나온 것을 확인할 수 있었다.
 
 ### 데이터베이스 분리 후
 
-![분리 후 리뷰 등록 Aggregate Report](/content/posts/2023-12-15---jmeter%20테스트/media/나눔%20등록%201.png)
-![분리 후 리뷰 등록 Summary Report](/content/posts/2023-12-15---jmeter%20테스트/media/나눔%20등록%202.png)
-![분리 후 리스트 요청 Aggregate Report](/content/posts/2023-12-15---jmeter%20테스트/media/나눔%20리스트%201.png)
-![분리 후 리스트 요청 Summary Report](/content/posts/2023-12-15---jmeter%20테스트/media/나눔%20리스트%201.png)
+![분리 후 리뷰 등록 Aggregate Report](./5.png)
+![분리 후 리뷰 등록 Summary Report](./6.png)
+![분리 후 리스트 요청 Aggregate Report](./7.png)
+![분리 후 리스트 요청 Summary Report](./8.png)
 분리 했을 때의 결과이다. 전체적으로 분리하기 전보다 훨씬 좋은 것을 확인할 수 있다. 우선 등록요청에서 표준편차 또한 굉장히 줄어들었고, 평균 응답시간도 많이 줄어들었다.
 리스트 요청 또한 등록요청과 같이 확연한 차이를 확인해 볼 수 있었다.
 
-![테스트 후 데이터베이스](/content/posts/2023-12-15---jmeter%20테스트/media/마스터%20디비.png)
-![테스트 후 데이터베이스](/content/posts/2023-12-15---jmeter%20테스트/media/슬레이브%20디비.png)
+![테스트 후 데이터베이스](./9.png)
+![테스트 후 데이터베이스](./10.png)
 위는 테스트 후 데이터베이스를 확인한 결과이다. master db에서와 slave db에서의 테이블 데이터의 차이는 단일로 테스트를 우선 진행하며 쌓은 데이터가 추가로 있기 때문이다.
 
 ### 마무리
