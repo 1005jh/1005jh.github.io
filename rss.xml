@@ -1,25 +1,495 @@
-<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[개발 블로그]]></title><description><![CDATA[개발 블로그]]></description><link>http://github.com/dylang/node-rss</link><generator>GatsbyJS</generator><lastBuildDate>Mon, 12 Feb 2024 19:29:27 GMT</lastBuildDate><item><title><![CDATA[jmeter 테스트 (mysql master, slave)]]></title><description><![CDATA[jmeter 테스트 (mysql master, slave)]]></description><link>https://1005jh.github.io//posts/2023-12-15---jmeter 테스트/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-12-15---jmeter 테스트/</guid><pubDate>Fri, 15 Dec 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;aliy 서비스는 리뷰가 메인이다. 리뷰라는 것의 특성상 쓰기보다는 읽기요청이 많을 것이라는게 예상되었고, 사용자가 많아졌을 때 적용할 수 있는 cqrs패턴을 사용해 데이터베이스를 분리했을 때와 분리하지 않았을 때의 성능차이를 보기위해 테스트를 진행하게 되었다.&lt;/p&gt;
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[개발 블로그]]></title><description><![CDATA[개발 블로그]]></description><link>http://github.com/dylang/node-rss</link><generator>GatsbyJS</generator><lastBuildDate>Mon, 12 Feb 2024 20:35:18 GMT</lastBuildDate><item><title><![CDATA[jmeter 테스트 (mysql master, slave)]]></title><description><![CDATA[jmeter 테스트 (mysql master, slave)]]></description><link>https://1005jh.github.io//posts/2023-12-15---jmeter 테스트/</link><guid isPermaLink="false">https://1005jh.github.io//posts/2023-12-15---jmeter 테스트/</guid><pubDate>Fri, 15 Dec 2023 12:36:37 GMT</pubDate><content:encoded>&lt;p&gt;aliy 서비스는 리뷰가 메인이다. 리뷰라는 것의 특성상 쓰기보다는 읽기요청이 많을 것이라는게 예상되었고, 사용자가 많아졌을 때 적용할 수 있는 cqrs패턴을 사용해 데이터베이스를 분리했을 때와 분리하지 않았을 때의 성능차이를 보기위해 테스트를 진행하게 되었다.&lt;/p&gt;
 &lt;h3 id=&quot;jmeter&quot; style=&quot;position:relative;&quot;&gt;&lt;a href=&quot;#jmeter&quot; aria-label=&quot;jmeter permalink&quot; class=&quot;anchor before&quot;&gt;&lt;svg aria-hidden=&quot;true&quot; focusable=&quot;false&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;jmeter&lt;/h3&gt;
 &lt;p&gt;원래는 ngrinder를 활용해 테스트를 진행하려고 했었으나 jmeter로 테스트를 하게 되었다.
 ngrinder는 docker를 활용해 agent를 늘리며, 배포환경에서 테스트가 가능했으나 비용적인 문제로 배포환경에서의 테스트는 할 수가 없었다. 물론 ngrinder도 로컬환경에서 테스트가 가능하지만 기기 성능 이슈로 docker를 많이 띄울 수 없어 mysql의 master, slave 세팅만 가져가며 jmeter를 선택하게 되었다.&lt;/p&gt;
 &lt;h3 id=&quot;테스트&quot; style=&quot;position:relative;&quot;&gt;&lt;a href=&quot;#%ED%85%8C%EC%8A%A4%ED%8A%B8&quot; aria-label=&quot;테스트 permalink&quot; class=&quot;anchor before&quot;&gt;&lt;svg aria-hidden=&quot;true&quot; focusable=&quot;false&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;테스트&lt;/h3&gt;
 &lt;p&gt;aliy 서비스에서 가장 많이 일어날 수 있는 일은 리뷰 등록과 리스트 요청이었다. 그래서 이 두가지를 메인으로 테스트를 진행하게 되었다. 두개의 쓰레드그룹을 만들어 하나는 1분에 걸쳐 1000명의 사용자가 로그인을 한 후 10번씩 리뷰를 등록하는 시나리오를 다른 하나는 1분에 걸쳐 1000명의 사용자가 로그인을 한 후 리스트 요청을 하는 시나리오로 진행했다.&lt;/p&gt;
 &lt;h3 id=&quot;데이터베이스-분리-전&quot; style=&quot;position:relative;&quot;&gt;&lt;a href=&quot;#%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%B6%84%EB%A6%AC-%EC%A0%84&quot; aria-label=&quot;데이터베이스 분리 전 permalink&quot; class=&quot;anchor before&quot;&gt;&lt;svg aria-hidden=&quot;true&quot; focusable=&quot;false&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;데이터베이스 분리 전&lt;/h3&gt;
-&lt;p&gt;&lt;img src=&quot;/media/%EB%8B%A8%EC%9D%BC%20add%202.png&quot; alt=&quot;분리 전 리뷰 등록 Aggregate Report&quot;&gt;
-&lt;img src=&quot;/media/%EB%8B%A8%EC%9D%BC%20add%201.png&quot; alt=&quot;분리 전 리뷰 등록 Summary Report&quot;&gt;
-&lt;img src=&quot;/content/posts/2023-12-15---jmeter%20%ED%85%8C%EC%8A%A4%ED%8A%B8/media/%EB%8B%A8%EC%9D%BC%20list%201.png&quot; alt=&quot;분리 전 리스트 요청 Aggregate Report&quot;&gt;
-&lt;img src=&quot;/content/posts/2023-12-15---jmeter%20%ED%85%8C%EC%8A%A4%ED%8A%B8/media/%EB%8B%A8%EC%9D%BC%20list%202.png&quot; alt=&quot;분리 전 리스트 요청 Summary Report&quot;&gt;
+&lt;p&gt;&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/93979b6a0044895570749cf3f5714377/a2b91/1.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 60.83333333333334%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAABy0lEQVQoz6WSTW/TQBCG/Ue4cOTABSFqx7trr+04TpymlDYiLQVuidNIaUK/3KgBqh4qpIoiFVEJcekPQBUnOHBEHDjxix7kDYnaa3N49M7srF7NjMZ6c5wzHo/I85z+zpDR4YiD/W2293bpdHu0Ox3aWUan26WTZWTdrsk3ez22hkO2hgOj2zsD8oN9LKEj4mqdBVfxwHZ56AiEH6DjCiVPY0uFIz3sGdNcsSAmPHIldhG7EiuMY56urVOtpyit8YKQuJZSrqbEtbrRCbX/bylhJTF5Ja2bP1OSegPLX9xg5fkm5eWXuEkLmTSROjJdqiCaIXVoKOKiNo2v1wu1yourNFY38JMl3ChFhDUz0m2xgnLM8kqTqJLgej7C15SUf2usYvlPmi2iag3hh4a5DMM4MYaFsetps5+5DIsRJybzjTrBw3KkP1uobWIfR11HG7Vv3OKE6Z8bHTpCYQuJozyEp5Ceh1sSuFIilUJIQUl6+EFAoAN0EOGHZXQQIqTCFQLHHLhnjty6/+wd99ZOaBx95cvnSz6+P+XbxWsuT484H2T8Plvn0/ErTrIW38/G/PmwR97f5Udb8/e8z6+LQ36+fcFV4w5Xj+/yDzVxwHswqItvAAAAAElFTkSuQmCC&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/93979b6a0044895570749cf3f5714377/8ac56/1.webp 240w,
+/static/93979b6a0044895570749cf3f5714377/d3be9/1.webp 480w,
+/static/93979b6a0044895570749cf3f5714377/e46b2/1.webp 960w,
+/static/93979b6a0044895570749cf3f5714377/f992d/1.webp 1440w,
+/static/93979b6a0044895570749cf3f5714377/882b9/1.webp 1920w,
+/static/93979b6a0044895570749cf3f5714377/1ab77/1.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/93979b6a0044895570749cf3f5714377/8ff5a/1.png 240w,
+/static/93979b6a0044895570749cf3f5714377/e85cb/1.png 480w,
+/static/93979b6a0044895570749cf3f5714377/d9199/1.png 960w,
+/static/93979b6a0044895570749cf3f5714377/07a9c/1.png 1440w,
+/static/93979b6a0044895570749cf3f5714377/29114/1.png 1920w,
+/static/93979b6a0044895570749cf3f5714377/a2b91/1.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/93979b6a0044895570749cf3f5714377/d9199/1.png&quot;
+            alt=&quot;분리 전 리뷰 등록 Aggregate Report&quot;
+            title=&quot;분리 전 리뷰 등록 Aggregate Report&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/fa56c6e701d6fe94af8d618786cbe27e/a2b91/2.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 60.83333333333334%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAAB1klEQVQoz6WSTWsTQRjH94t48ujBg0iTzbzszG6yu9lNrX2JjS1YEBRp3sAmMbVpaigqqPUNCiLoB7B4EQ8eRfDmZ/pJpqTaa3P48X/mmWf+zDzzeIfPRkwmY0ajPXaGA8ZPxoweD3i0O6TZ6bLdbLLdatFstx2tTptmq0Wn26XX79Pr95wOhz1G+3t4MixTSXMWhOJaocR1XyICi6nE+NpQlJqiCigq7eKC/KfTMzMKUlEQCi+KY241blPNc7S1BGFInNWoVDPiLHcaJVWiJKWcZlSq+ZkmeY3E1eauNskX8ezSFmtbbeLVu8hsE52to8Iywlh0WHZIEzqUjc5yM2a5mXqV2go365uYZBEZZcgoxVfBhfFsJWZ5tU45SRGBQRpLSZsL44VxyvJaw/VFmsgxl2EUp6zUG9g4cb877dVchtMnThs6NZvH6JQAz1fmv6YaN3t+YE91tp7Oo5vF88z2zt3Ql4qiVPg6QGiF0pqSLxBSuFhISUlpTBgSGouxESYqY8IIoTRCCDfoCzKgIAO8qxvPudJ4yo2DL3z88Jm3r17y9XjMpxcTXncf8Otog3eThxzeX+fb0T6/3wzYaff5fs/y532Hn8cjfhzc4WTxEidLl/kLCFvAwmHJzwMAAAAASUVORK5CYII=&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/fa56c6e701d6fe94af8d618786cbe27e/8ac56/2.webp 240w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/d3be9/2.webp 480w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/e46b2/2.webp 960w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/f992d/2.webp 1440w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/882b9/2.webp 1920w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/1ab77/2.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/fa56c6e701d6fe94af8d618786cbe27e/8ff5a/2.png 240w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/e85cb/2.png 480w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/d9199/2.png 960w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/07a9c/2.png 1440w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/29114/2.png 1920w,
+/static/fa56c6e701d6fe94af8d618786cbe27e/a2b91/2.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/fa56c6e701d6fe94af8d618786cbe27e/d9199/2.png&quot;
+            alt=&quot;분리 전 리뷰 등록 Summary Report&quot;
+            title=&quot;분리 전 리뷰 등록 Summary Report&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/475d2fc4453575d4f9388e8af6e5ad41/a2b91/3.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 61.24999999999999%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAABxUlEQVQoz6WSPW8TQRCG759QUVEgisS5j9272/v0nW1IIHESRSgIGgojwGcHETu2cTBxFBGBFCHRu0NIdEgUVPyuB93GjhDp4uLRO7sz++5oNMbpxzHT6YTx8Zi3wyMmJ+85HvUYjAZ0ul3axSuK4jWdTvuSbkFRtDk46NLr9zjU9BkMe9rDEEFInOas2oJ7FZMVy0H6Cj9OWBMuFUdeY22u5RuN5VBxhL43gqTK1u4eWeMBXhhrkrxOWmuQ1urEWU6S1bTGWY0krxGm2TyuX1HWV+sNDD9KeLi1TZTlOH6AVCFuEF3p/5Qf/ptbNKHjIMIof9rY3EbFqTYUKsCS3o0xgjhlY7NJVM0R2jDEdv0bo2dYdljORRv6wXKG4foTHj1uEa7vI/I9ZNZczlAGCV5UxVExthfh+NEShh7GtcGWCU9huUrHC0zpY+rYw5zX2vqstDqLDi0hsRyBViGR0sE0LRzHRsrLnC0Efrnsrod0FZ5SenXM8p1lUbEFK8JnVXgYd3fG3GmOaPRnfLn4ysn0jNmnIRcf3jFpPefX6S7TozaHz3b4djbg9/kbXrYO+P5U8ef8BT8/9/nR32dWv8Xs/m3+Ar5RwWQp5VXRAAAAAElFTkSuQmCC&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/475d2fc4453575d4f9388e8af6e5ad41/8ac56/3.webp 240w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/d3be9/3.webp 480w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/e46b2/3.webp 960w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/f992d/3.webp 1440w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/882b9/3.webp 1920w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/1ab77/3.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/475d2fc4453575d4f9388e8af6e5ad41/8ff5a/3.png 240w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/e85cb/3.png 480w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/d9199/3.png 960w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/07a9c/3.png 1440w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/29114/3.png 1920w,
+/static/475d2fc4453575d4f9388e8af6e5ad41/a2b91/3.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/475d2fc4453575d4f9388e8af6e5ad41/d9199/3.png&quot;
+            alt=&quot;분리 전 리스트 요청 Aggregate Report&quot;
+            title=&quot;분리 전 리스트 요청 Aggregate Report&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/0dcfc070c1a407d10107dbef459a64a8/a2b91/4.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 60.83333333333334%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAABzklEQVQoz6WSS2sTYRSG55e4celCEGyTme86M5lcJgnphdhabN0ouMi10KSmzUWrorRahIKIuJesxIVLEdz5ox6ZmQTsNl08vJz3fN/L4XCc128nvDqbMZmMORodM3s5Y3I65PnJiE6vT6vdpt3p0Ol2M3rdtO4d9hkMhxnHQ0ajAZPpGEf6IVEpZs2T3Mu53HcFwlhsoUheGXJSk5c61WsIxXqKTP/mpEo9JyxVeLD3iEq9gQ4jTBhRjGtElSrFuEpUiUneJBTKceovtVStUarWs7dJXavjJJNsNXdTU9gA5YfooIC0QaoJibckrRf+/yQ9ExRwkqCNrSY2KqYhyQpcZVbG8aMim9tNCqUy0lik9fG0XRknqDTY3NmnEG8gwxgZlm8WGDYes73fImgcIMoPkeXmomlWC5RGo30foTWelHhK3WBCg+Nqi6uW+LjaxzOZpr0FyU3m1VIzst71nTuuVLhS4iqN0AqlFW7eQwiB0hqRTC0V1g8IrI+xITbISHxPiPSg16RhXRqcu3tvuLN7Rn36jc+fvvLh/Jz51ZQv715w0XnG74s9LmeHzJ7u8P39mD+XA/qtI3488fn7scOvq1N+Tg6Y128xb9zmH8DzwOmtk2QRAAAAAElFTkSuQmCC&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/0dcfc070c1a407d10107dbef459a64a8/8ac56/4.webp 240w,
+/static/0dcfc070c1a407d10107dbef459a64a8/d3be9/4.webp 480w,
+/static/0dcfc070c1a407d10107dbef459a64a8/e46b2/4.webp 960w,
+/static/0dcfc070c1a407d10107dbef459a64a8/f992d/4.webp 1440w,
+/static/0dcfc070c1a407d10107dbef459a64a8/882b9/4.webp 1920w,
+/static/0dcfc070c1a407d10107dbef459a64a8/1ab77/4.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/0dcfc070c1a407d10107dbef459a64a8/8ff5a/4.png 240w,
+/static/0dcfc070c1a407d10107dbef459a64a8/e85cb/4.png 480w,
+/static/0dcfc070c1a407d10107dbef459a64a8/d9199/4.png 960w,
+/static/0dcfc070c1a407d10107dbef459a64a8/07a9c/4.png 1440w,
+/static/0dcfc070c1a407d10107dbef459a64a8/29114/4.png 1920w,
+/static/0dcfc070c1a407d10107dbef459a64a8/a2b91/4.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/0dcfc070c1a407d10107dbef459a64a8/d9199/4.png&quot;
+            alt=&quot;분리 전 리스트 요청 Summary Report&quot;
+            title=&quot;분리 전 리스트 요청 Summary Report&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
 위는 분리하기 전의 결과이다. 분리하기 전의 등록요청은 총 1만개의 실행이 평균 응답시간은 26초로 99%를 처리하는데 있어 43초가 걸린다고 나왔다. 그러나 표준편차가 큰 것을 확인할 수 있었다.
 리스트 요청은 등록요청보다는 적은 수치가 나왔다. 총 1만개의 실행이 평균 응답시간 21초로 99%를 처리하는데 있어 30초가 걸리며 표준편차 또한 등록요청보다 낮게 나온 것을 확인할 수 있었다.&lt;/p&gt;
 &lt;h3 id=&quot;데이터베이스-분리-후&quot; style=&quot;position:relative;&quot;&gt;&lt;a href=&quot;#%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%B6%84%EB%A6%AC-%ED%9B%84&quot; aria-label=&quot;데이터베이스 분리 후 permalink&quot; class=&quot;anchor before&quot;&gt;&lt;svg aria-hidden=&quot;true&quot; focusable=&quot;false&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;데이터베이스 분리 후&lt;/h3&gt;
-&lt;p&gt;&lt;img src=&quot;/content/posts/2023-12-15---jmeter%20%ED%85%8C%EC%8A%A4%ED%8A%B8/media/%EB%82%98%EB%88%94%20%EB%93%B1%EB%A1%9D%201.png&quot; alt=&quot;분리 후 리뷰 등록 Aggregate Report&quot;&gt;
-&lt;img src=&quot;/content/posts/2023-12-15---jmeter%20%ED%85%8C%EC%8A%A4%ED%8A%B8/media/%EB%82%98%EB%88%94%20%EB%93%B1%EB%A1%9D%202.png&quot; alt=&quot;분리 후 리뷰 등록 Summary Report&quot;&gt;
-&lt;img src=&quot;/content/posts/2023-12-15---jmeter%20%ED%85%8C%EC%8A%A4%ED%8A%B8/media/%EB%82%98%EB%88%94%20%EB%A6%AC%EC%8A%A4%ED%8A%B8%201.png&quot; alt=&quot;분리 후 리스트 요청 Aggregate Report&quot;&gt;
-&lt;img src=&quot;/content/posts/2023-12-15---jmeter%20%ED%85%8C%EC%8A%A4%ED%8A%B8/media/%EB%82%98%EB%88%94%20%EB%A6%AC%EC%8A%A4%ED%8A%B8%201.png&quot; alt=&quot;분리 후 리스트 요청 Summary Report&quot;&gt;
+&lt;p&gt;&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/ed71162e8d8366d9893fa24220f9356e/a2b91/5.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 61.24999999999999%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAABx0lEQVQoz6WSzWsTQRjG9z/x5MmDKDXJfszszuxmd7ObNBIpaYsHQS8eKmq+xCZN0tTYlGJRKIL33ETwJnjw5N/1k52kVfDWHH48z3w9zPvOWGcfZiwWc2YnM95OjpifvuNkOmQ8HdPr9+l0XtHtvqbX66zod+l2OwwGfYajIYeGEePJ0GRYQkfEaU7JFdwr22w5HlJpVJxQEQFlT/5HZa3FGYPjUfGEmbeqacbu/mPy5kNUFKOqMUneIK1vk9YbVGs5cZZfa5zVidLM+GK92JvkdaO1RhOromPyVhsvzrgvNCU/wg+rSP1X/6WYEyq89kEUG2QYGbX8JKfeauOECVsmMMSRwY2xoqTGo522KUHqEF9HuL66MVaY1Gjt7BLVMlNKwYaBqQnUSYoX6M0DpQpNM4uwTYJWBFiOr9YNVRjva9xAG12NV9hSYRsfYK8fwL3a7yu8qxs6QuB4AkdICi+lh207eJ6LlNKsuUKgis/uB0hfE2htvo1dnHMcyq7ggVCURIB1d2/GnfaU7dGSz5dfOF2cs/w44fL9MfOD5/w822dx1OHw2R5fz8f8unjDy4MB355qfl+84MenEd9HT1g2brFs3uYPLz7AGxUFY78AAAAASUVORK5CYII=&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/ed71162e8d8366d9893fa24220f9356e/8ac56/5.webp 240w,
+/static/ed71162e8d8366d9893fa24220f9356e/d3be9/5.webp 480w,
+/static/ed71162e8d8366d9893fa24220f9356e/e46b2/5.webp 960w,
+/static/ed71162e8d8366d9893fa24220f9356e/f992d/5.webp 1440w,
+/static/ed71162e8d8366d9893fa24220f9356e/882b9/5.webp 1920w,
+/static/ed71162e8d8366d9893fa24220f9356e/1ab77/5.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/ed71162e8d8366d9893fa24220f9356e/8ff5a/5.png 240w,
+/static/ed71162e8d8366d9893fa24220f9356e/e85cb/5.png 480w,
+/static/ed71162e8d8366d9893fa24220f9356e/d9199/5.png 960w,
+/static/ed71162e8d8366d9893fa24220f9356e/07a9c/5.png 1440w,
+/static/ed71162e8d8366d9893fa24220f9356e/29114/5.png 1920w,
+/static/ed71162e8d8366d9893fa24220f9356e/a2b91/5.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/ed71162e8d8366d9893fa24220f9356e/d9199/5.png&quot;
+            alt=&quot;분리 후 리뷰 등록 Aggregate Report&quot;
+            title=&quot;분리 후 리뷰 등록 Aggregate Report&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/f47d79ffb97c6f429975c81f8c092e7c/a2b91/6.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 61.24999999999999%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAABxklEQVQoz6WRzWsTQRjG9z/x5MlDEdom2d2ZnZndzW6ySSPV0rR4EPTioaJuPsQkbWJqbEqxKBTBe24ieBM8ePLv+slOmiIem8OP55mP9+F9Z5zzj1Pm8xnT0ylvx8fMzt5zOhlwMjmm2+uR56/IO6/pdnM63Zxur0Onk9Pv9xiOhgwsI07GQ5vhCBNRTTO2PcH9UoVN10cojYoTyiKg5Msb/Z+ixuL6lH1B2Zc4cVqjffiYrPUAE1XRcZU0a5JkTatxLSNK65bCV+vZtTZIG01L4Yv7SaOJs6UT0t02bpyx4YdsBhFBGOMrY1WaCKFDS+FXe4X+y2rPCWsNWo/ayDilrELcAqlujRMmKQ/39u0o0iy78AJ9a5wwqbG71yaq1W9GWzMwtYEmSe27rR0odYiKqjZsnaAlCscN9PWDaqwPDJ4yVpfrJRWpqFivrC9qvNX9QOOvOnSFwPUFrpAUXkqfSsXF9z2klPbMEwKtDTpQyMCgjLGfVynqXJeSJ9gSmm2hcDYOptzbn7AzWvDl6itn8wsWn8ZcfXjH7Og5v84PmR/nDJ4d8O3ihN+Xb3h51Of7U8Ofyxf8/Dzix+gJi+YdFq27/AXk68AF9EikuAAAAABJRU5ErkJggg==&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/f47d79ffb97c6f429975c81f8c092e7c/8ac56/6.webp 240w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/d3be9/6.webp 480w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/e46b2/6.webp 960w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/f992d/6.webp 1440w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/882b9/6.webp 1920w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/1ab77/6.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/f47d79ffb97c6f429975c81f8c092e7c/8ff5a/6.png 240w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/e85cb/6.png 480w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/d9199/6.png 960w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/07a9c/6.png 1440w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/29114/6.png 1920w,
+/static/f47d79ffb97c6f429975c81f8c092e7c/a2b91/6.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/f47d79ffb97c6f429975c81f8c092e7c/d9199/6.png&quot;
+            alt=&quot;분리 후 리뷰 등록 Summary Report&quot;
+            title=&quot;분리 후 리뷰 등록 Summary Report&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/a2b91/7.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 60.83333333333334%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAAByUlEQVQoz6WQTWsTURSG55e4cemioNgkM/djvjKZTJoYW9qmBHGl4KKZJIUmtU0mqVVRWi1CQUTcS1biwqUI7vxRj9yJCcVls3h4z50588w513r1JuPl2ZQsG3N4PGT6Yko2OuL56IS012e/06GTpqTd7pxeNz/3DvoMhkMGwwGDoyHHJ0OyyRhL+iFRXGPdkdwt2ty3BdLz8aIKtnIpSk1J6jwXzM+KgjDI/NuiUDlWGCfsth+RNJroMMINIyq1+pJyNaFcreVEyZwwruZ5vS/eqFOtP8DyyhW2dvaIkg2EF6D8EB2Ul2k2UP8hr/UZzBCL2jKi5tYORmyEptmselOsIIrZ3N7NVzIyM5GjvRtj+ZWYh9stwmqynHAlYTGIqW62KAQxa8LnnlpRKFwfFZRxXJ+S8rBXkDnaxTKFuUwnv9R/QtfH1n5eL7Kk3PyH85yzeG8cYjGhLRW2kNhKI7RCaYVdchBSoLVGSIkjFV4QEHg+rhfiByFeEObPHSEoCcW6dClIF2ut/Zo7e2c0Jl/59PEL78/PmV1N+Pz2lIv0Gb8u2lxOD5g+bfHt3ZjflwP6+4d8f+Lz50PKz6sRP7LHzBq3mDVv8xc+4L/x1M912AAAAABJRU5ErkJggg==&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/8ac56/7.webp 240w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/d3be9/7.webp 480w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/e46b2/7.webp 960w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/f992d/7.webp 1440w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/882b9/7.webp 1920w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/1ab77/7.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/8ff5a/7.png 240w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/e85cb/7.png 480w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/d9199/7.png 960w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/07a9c/7.png 1440w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/29114/7.png 1920w,
+/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/a2b91/7.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/f741e5f6792c5bbd77ba7b0d9d1a81b2/d9199/7.png&quot;
+            alt=&quot;분리 후 리스트 요청 Aggregate Report&quot;
+            title=&quot;분리 후 리스트 요청 Aggregate Report&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/a2b91/8.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 61.24999999999999%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAAB1ElEQVQoz6WSO28TQRRG959QUVEgijx2d+7szK7X79jBIU8BQYIGKZEQib2J5NjGZJ2QBAUEQvTuEBIdEgUVP+ygnTgSBVVSHN3vzr3z6c7DO7/MOTs/Ic9z+uMhp2cT8rd9RuMhvYOMbvc13d4eWbZPL9sny7p0e/scHmYMBgP6jiGjNwOO8xxPkpRytcF8KDxY8JkLFGJiTFphUSIWlP4vRb8jUI5FJSwqjZdUaqxtPqbeamNKZUelsUS1oLlEWmuQ1uqUqnWny/XGLDZdvdpsOe32NFt4Nq3QWV13Tcom6LhElKROF7HIxSaO69p1/JdirRjGK9xXVjeIy1VnInGJQJsb4yXlCp1Ha+5YYixiY8LI3hgvqS/T2dgmbTxESg2kVLul4fI2K092SNpPUbUtpLY2K5qbGWoTYZIEFUWEIoRa32JCgxdEMYEukphgRmiu9VVjoX1t8Z22+LMHcCbm6s7VDC8QIVCCX0QRtCh8P0CFAVprVysmt9ZidIRoi7Gx+0a+EoLAZyEU5sQyLwbv/uaYe+sjWv0pXz5/ZXJ6wfTDiE+TMcc7L/n1bouToz0OX2zy7WLI78sDXu1mfH+e8Of9Lj8/9vlx9Izp0h2m7bv8BRzwwSaYLCEeAAAAAElFTkSuQmCC&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/8ac56/8.webp 240w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/d3be9/8.webp 480w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/e46b2/8.webp 960w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/f992d/8.webp 1440w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/882b9/8.webp 1920w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/1ab77/8.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/8ff5a/8.png 240w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/e85cb/8.png 480w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/d9199/8.png 960w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/07a9c/8.png 1440w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/29114/8.png 1920w,
+/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/a2b91/8.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/bf2aaed8b68c4eeffccbfe2b6e6b10dd/d9199/8.png&quot;
+            alt=&quot;분리 후 리스트 요청 Summary Report&quot;
+            title=&quot;분리 후 리스트 요청 Summary Report&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
 분리 했을 때의 결과이다. 전체적으로 분리하기 전보다 훨씬 좋은 것을 확인할 수 있다. 우선 등록요청에서 표준편차 또한 굉장히 줄어들었고, 평균 응답시간도 많이 줄어들었다.
 리스트 요청 또한 등록요청과 같이 확연한 차이를 확인해 볼 수 있었다.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;/content/posts/2023-12-15---jmeter%20%ED%85%8C%EC%8A%A4%ED%8A%B8/media/%EB%A7%88%EC%8A%A4%ED%84%B0%20%EB%94%94%EB%B9%84.png&quot; alt=&quot;테스트 후 데이터베이스&quot;&gt;
-&lt;img src=&quot;/content/posts/2023-12-15---jmeter%20%ED%85%8C%EC%8A%A4%ED%8A%B8/media/%EC%8A%AC%EB%A0%88%EC%9D%B4%EB%B8%8C%20%EB%94%94%EB%B9%84.png&quot; alt=&quot;테스트 후 데이터베이스&quot;&gt;
+&lt;p&gt;&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/46e31705d425cdcfece58c4e79c494ff/a2b91/9.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 60.83333333333334%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAACsUlEQVQoz42Q20sUYRiH5z/pqrsQDXU97Ozs7AlFU4KSoBvrwlO2yqqFIQqN3VlmB4RETQIl8ADpqolBUHTnRVeSubpuhe3BPc6M3+zMfL+Yr13zsheeeb95B575vR838vilJi1/I9JKhIwuHZD++T3SO/2VDC/sEWkxRB4thcjo4j4ZebtPBt/sEmlxn/TMR0jXXJgMTXwggb4+0hvoIwMDATL4YJBwt9s6cBAKI5NK41RVEU3EEU+koJ5qyJNT5DUCmAZADegagUFUROIKdg5k7Gx/gsMporKWR41DQDUvgGvr7KaRH8c0lkjTWDxFc7kczeQUmsrIVJYVms3JlBCN6rpBTUqpaT2oSXVNo7vfQ7Sh+Sr11TfQusYmWn+liXLtXd2IRH4hFksilcpAVhTIsgxVVaGqp1BUlc2ss2masMoo9HD4CC5fHQS39wyuuyeAZDLDSKezSKZSyGZzTJDXdei6jnw+zygKi/3wMAxedLNVax1O1Dic4Lru9iCdzjGOf8dwFPmJaCyOk2QSsqxAUVQYhoFiUUr/CcNhOFweJqoVRAbXccePk5M0IxZLIJ5IMImVUNM0EKKxlJa0iJXcqlDogAmrzwvb/AHouglNM5HPGyzB/1Y0Gv0rtFYuChtbWjA6MwVpZgpTCwtYWwvi3WoQq6yvMYLrG9jYfH/G+sYmtra2MPt6DrzoOreyE5zNzuNSeQWjpNyGsooqlFVWobTCwsa69W7NSwu9rPDtsq0aNYVkZwktK+8U2Z8E0QlRdIK38xAEB0RRhEMQwAtOuD0eeF1uuNxeeLw+uL0+Nrfb7ajhHeweLbiyW09R0jqOZmkF069m8ezJGJYnRzAz9hDjvZ34PH4Tz6UApI4bWB0fxpeJ++j330OwXcTOCz8+Tg5hW2rF5rULWL9+EX8AnDe7P1ZOycoAAAAASUVORK5CYII=&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/46e31705d425cdcfece58c4e79c494ff/8ac56/9.webp 240w,
+/static/46e31705d425cdcfece58c4e79c494ff/d3be9/9.webp 480w,
+/static/46e31705d425cdcfece58c4e79c494ff/e46b2/9.webp 960w,
+/static/46e31705d425cdcfece58c4e79c494ff/f992d/9.webp 1440w,
+/static/46e31705d425cdcfece58c4e79c494ff/882b9/9.webp 1920w,
+/static/46e31705d425cdcfece58c4e79c494ff/1ab77/9.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/46e31705d425cdcfece58c4e79c494ff/8ff5a/9.png 240w,
+/static/46e31705d425cdcfece58c4e79c494ff/e85cb/9.png 480w,
+/static/46e31705d425cdcfece58c4e79c494ff/d9199/9.png 960w,
+/static/46e31705d425cdcfece58c4e79c494ff/07a9c/9.png 1440w,
+/static/46e31705d425cdcfece58c4e79c494ff/29114/9.png 1920w,
+/static/46e31705d425cdcfece58c4e79c494ff/a2b91/9.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/46e31705d425cdcfece58c4e79c494ff/d9199/9.png&quot;
+            alt=&quot;테스트 후 데이터베이스&quot;
+            title=&quot;테스트 후 데이터베이스&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 960px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/82c33c39790280a091e9a9eb53e3e938/a2b91/10.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 61.24999999999999%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAABYlAAAWJQFJUiTwAAACr0lEQVQoz42S228MYRiH909x5UZCNLTb3Z3TTivEoREucKM3lJRFJbQOpY06pUSECCFE41yESLTdUu7EhTuhrVU22m67a2e7O3uawz4yX6m68yZP3m++ZH553nfGd+LiNbqeDnPi6Xe6Hsc4cHeYlhsf6Lj/mZO9o5x6PMKp3hE6Hwxz9M5HunpH2H9vjD09Xzl2aYjWtkMcbG3j8JE22o8fx9e4bQdfvnwjY8yQM00mkimmUxnMgkWpVKJcKuPYDq7jzD4X8sQSJu9Gc7zvf4ukKCwPhKiVZPySjK9p5y7i8QmmkwYzWRMj7fU8llPBcRwsy8ZxXIHruriVClRcbKvMp9EYqxvWU79qNSvXrGXV2nX4Gpuaicd/kJhKUSiUmE6mmExMkU4bmGYe27apeCG/yzs7rivOY2Pf0FesRNHrBWrdCnxNu/dhGFlSKYNy2cLM5/ke/8H4+CRTU0my2ZwYtVgqCUOv3LnAMSRNp1ZSCCoaAVnF1xzZSyaTI52eEYae3Uw2i2VZFIpFisXS7O7K5TlTd56hHK4TQV6gh29Hc4SfPzMkUwa5nMn4xCSGkREvi53Nw9uph7cGr2Kxr8hh/d/AyL4WHLuCbbliZNt2+N9KJBLC8M/IInDdpk2c6bnF6Z5b3Hz0kIH+KP0Dg/T1D9DXNyB6NPqKwVev54gOvmZo6A23e+4gqeF5hiq+6pDMomXLBUuq/VTVBKiqqWVp9SxVHr/v/nbv3s8yf5CAEp6zE4ZBWUFSVCRVE11VZULBELIcQlNVJFkWP6+u6+iahqrphPU6tLp6QrJCMBjAH5KpkTX83ldeuvUci7d209DxiGtXrtPd3c2DS8e4eraTM5GdDJ3bwvmO/bRv38yT8+28vdBKS+Qgz7aHeXcxQvTyEV52NPJiwwKeb1zILxPevLXZ6PQoAAAAAElFTkSuQmCC&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;picture&gt;
+          &lt;source
+              srcset=&quot;/static/82c33c39790280a091e9a9eb53e3e938/8ac56/10.webp 240w,
+/static/82c33c39790280a091e9a9eb53e3e938/d3be9/10.webp 480w,
+/static/82c33c39790280a091e9a9eb53e3e938/e46b2/10.webp 960w,
+/static/82c33c39790280a091e9a9eb53e3e938/f992d/10.webp 1440w,
+/static/82c33c39790280a091e9a9eb53e3e938/882b9/10.webp 1920w,
+/static/82c33c39790280a091e9a9eb53e3e938/1ab77/10.webp 3360w&quot;
+              sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+              type=&quot;image/webp&quot;
+            /&gt;
+          &lt;source
+            srcset=&quot;/static/82c33c39790280a091e9a9eb53e3e938/8ff5a/10.png 240w,
+/static/82c33c39790280a091e9a9eb53e3e938/e85cb/10.png 480w,
+/static/82c33c39790280a091e9a9eb53e3e938/d9199/10.png 960w,
+/static/82c33c39790280a091e9a9eb53e3e938/07a9c/10.png 1440w,
+/static/82c33c39790280a091e9a9eb53e3e938/29114/10.png 1920w,
+/static/82c33c39790280a091e9a9eb53e3e938/a2b91/10.png 3360w&quot;
+            sizes=&quot;(max-width: 960px) 100vw, 960px&quot;
+            type=&quot;image/png&quot;
+          /&gt;
+          &lt;img
+            class=&quot;gatsby-resp-image-image&quot;
+            src=&quot;/static/82c33c39790280a091e9a9eb53e3e938/d9199/10.png&quot;
+            alt=&quot;테스트 후 데이터베이스&quot;
+            title=&quot;테스트 후 데이터베이스&quot;
+            loading=&quot;lazy&quot;
+            decoding=&quot;async&quot;
+            style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+          /&gt;
+        &lt;/picture&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;
 위는 테스트 후 데이터베이스를 확인한 결과이다. master db에서와 slave db에서의 테이블 데이터의 차이는 단일로 테스트를 우선 진행하며 쌓은 데이터가 추가로 있기 때문이다.&lt;/p&gt;
 &lt;h3 id=&quot;마무리&quot; style=&quot;position:relative;&quot;&gt;&lt;a href=&quot;#%EB%A7%88%EB%AC%B4%EB%A6%AC&quot; aria-label=&quot;마무리 permalink&quot; class=&quot;anchor before&quot;&gt;&lt;svg aria-hidden=&quot;true&quot; focusable=&quot;false&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;마무리&lt;/h3&gt;
 &lt;p&gt;처음 jmeter를 사용할 때는 단순한 작업도 어려움이 많았다. 토큰을 설정하는 과정이며 요청을 순서대로 할 때의 작업 등등 어려운게 많았지만 이번 테스트를 진행하며 연습이 많이 되었다.
