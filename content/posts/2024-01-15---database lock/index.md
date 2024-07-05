@@ -1,5 +1,5 @@
 ---
-title: database lock
+title: 글로벌 락과 테이블 락
 date: "2024-01-15T12:36:37.121Z"
 template: "post"
 draft: false
@@ -75,6 +75,23 @@ unlock tables; -- lock 해제
 | 499999 | Engineer           | 1997-11-30 | 9999-01-01 |
 +--------+--------------------+------------+------------+
 443308 rows in set (1 min 29.07 sec) -- 쿼리 실행
+
+
+세션 1
+mysql> lock tables titles read; -- titles 테이블에 잠금 설정
+Query OK, 0 rows affected (0.00 sec)
+
+세션 2
+mysql> insert into titles values (499999, "lock_test1", "2000-12-12", "9999-12-12"); -- 대기중
+
+세션 1
+mysql> unlock tables;
+Query OK, 0 rows affected (0.00 sec) -- lock 해제
+
+mysql> insert into titles values (499999, "lock_test1", "2000-12-12", "9999-12-12"); -- 쿼리 실행
+Query OK, 1 row affected (36.16 sec)
+
+mysql>
 ```
 
-위와 같이 됨을 확인할 수 있다.
+세션 1에서 잠금을 설정하면 다른 세션에서는 잠금이 설정되어 있어 대기하는 것을 알 수 있다.
